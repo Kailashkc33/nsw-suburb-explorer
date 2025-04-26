@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parramatta Suburbs Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4ECDC4;
+            --accent-color: #FFE66D;
+            --text-color: #2C3E50;
+            --background-color: #F7F9FC;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 0 0 2rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .search-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: var(--background-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #E0E0E0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .results-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: 200px;
+        }
+
+        .suburb-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .suburb-card:hover {
+            transform: translateX(5px);
+        }
+
+        .suburb-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .suburb-details {
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .error-message {
+            color: var(--primary-color);
+            text-align: center;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 2rem 0;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .search-tabs {
+                flex-direction: column;
+            }
+        }
+
+        footer {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .footer-links a {
+            color: var(--accent-color);
+            text-decoration: none;
+            margin-left: 1rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .footer-container {
+                font-size: 0.95rem;
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+            .footer-links a {
+                margin-left: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>NSW Suburbs Explorer</h1>
+            <p class="subtitle">Discover the vibrant suburbs of New South Wales</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="search-container">
+            <div class="search-tabs">
+                <button class="tab active" data-tab="region">Search by Region</button>
+                <button class="tab" data-tab="suburb">Search by Suburb</button>
+            </div>
+            <input type="text" class="search-input" placeholder="Enter region or suburb name..." id="searchInput">
+        </div>
+
+        <div class="results-container" id="results">
+            <!-- Results will be populated here -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <span>&copy; <span id="year"></span> NSW Suburbs Explorer &mdash; Built by Kailash KC</span>
+            <span class="footer-links">
+                <a href="https://github.com/kailashkc33" target="_blank" rel="noopener">GitHub</a>
+            </span>
+        </div>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentTab = 'region';
+
+        // Test API connection on page load
+        window.addEventListener('load', async () => {
+            try {
+                console.log('Testing API connection...');
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                console.log('API health check:', data);
+            } catch (error) {
+                console.error('API health check failed:', error);
+                document.getElementById('results').innerHTML = `
+                    <p class="error-message">Unable to connect to the server. Please check if the server is running.</p>
+                `;
+            }
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+                document.getElementById('searchInput').value = '';
+                document.getElementById('results').innerHTML = '';
+            });
+        });
+
+        // Search functionality
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                document.getElementById('results').innerHTML = '';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                if (currentTab === 'region') {
+                    searchByRegion(query);
+                } else {
+                    searchBySuburb(query);
+                }
+            }, 300);
+        });
+
+        async function searchByRegion(region) {
+            try {
+                console.log('Searching by region:', region);
+                const url = `${API_URL}/suburbs/region/${encodeURIComponent(region)}`;
+                console.log('Request URL:', url);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    displayResults(data.suburbs);
+                } else {
+                    displayError(data.error || 'Error searching for suburbs');
+                }
+            } catch (error) {
+                console.error('Error in searchByRegion:', error);
+                displayError('Error searching for suburbs. Please try again.');
+            }
+        }
+
+        async function searchBySuburb(query) {
+            try {
+                console.log('Searching by suburb:', query);
+                const url = `${API_URL}/suburbs/search?query=${encodeURIComponent(query)}`;
+                console.log('Request URL:', url);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    displayResults(data.results);
+                } else {
+                    displayError(data.error || 'Error searching for suburbs');
+                }
+            } catch (error) {
+                console.error('Error in searchBySuburb:', error);
+                displayError('Error searching for suburbs. Please try again.');
+            }
+        }
+
+        function displayResults(suburbs) {
+            console.log('Displaying results:', suburbs);
+            const resultsContainer = document.getElementById('results');
+            if (suburbs.length === 0) {
+                resultsContainer.innerHTML = '<p class="error-message">No suburbs found</p>';
+                return;
+            }
+
+            resultsContainer.innerHTML = suburbs.map(suburb => `
+                <div class="suburb-card">
+                    <div class="suburb-name">${suburb.suburb}</div>
+                    <div class="suburb-details">
+                        <p>Region: ${suburb.region}</p>
+                        <p>Postcode: ${suburb.postcode}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayError(message) {
+            console.error('Displaying error:', message);
+            document.getElementById('results').innerHTML = `
+                <p class="error-message">${message}</p>
+            `;
+        }
+
+        // Set current year in footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html> 
