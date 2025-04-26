@@ -1,32 +1,27 @@
-# Sydney Suburbs Backend
+NSW Suburbs Explorer
+A modern, vibrant web application for exploring suburbs across New South Wales, Australia.
+Users can search for suburbs by region or by name, view postcodes, and discover the diversity of NSW’s localities.
+Built with Node.js, Express, Supabase, and a beautiful responsive frontend.
 
-A backend service for managing Sydney suburbs data using Express.js and Supabase.
 
-## Setup
+Features
+🔎 Search suburbs by region or suburb name
+📍 View suburb details including region and postcode
+🌏 Explore all regions in NSW
+⚡ Fast, modern, and mobile-friendly UI
+🔒 Secure backend with Supabase integration
 
-1. Install dependencies:
-```bash
-npm install
-```
 
-2. Create a `.env` file in the root directory with the following variables:
-```
-PORT=3000
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+Tech Stack
+Node.js + Express (Backend API)
+Supabase (Database & Auth)
+HTML/CSS/JS (Frontend, no framework)
+Deployed locally or on your favorite platform
 
-3. Start the development server:
-```bash
-node src/index.js
-```
 
-## API Endpoints
-
-- `GET /health` - Health check endpoint
-
-## Environment Variables
-
-- `PORT` - The port number the server will run on (default: 3000)
-- `SUPABASE_URL` - Your Supabase project URL
-- `SUPABASE_ANON_KEY` - Your Supabase anonymous key 
+Getting Started
+Clone the repo
+Install dependencies: npm install
+Add your Supabase credentials to a .env file
+Start the server: npm start
+Visit http://localhost:3000 in your browser

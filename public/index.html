@@ -12,6 +12,7 @@
             --accent-color: #FFE66D;
             --text-color: #2C3E50;
             --background-color: #F7F9FC;
+            --pill-bg: #e0f7fa;
         }
 
         * {
@@ -25,6 +26,25 @@
             background-color: var(--background-color);
             color: var(--text-color);
             line-height: 1.6;
+            animation: fadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .accent-bar {
+            height: 5px;
+            width: 80px;
+            margin: 0.5rem auto 1.2rem auto;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color), var(--primary-color));
+            background-size: 300% 100%;
+            animation: gradientMove 4s linear infinite;
+            border-radius: 999px;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
 
         .container {
@@ -36,11 +56,27 @@
         header {
             text-align: center;
             padding: 3rem 0;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: 
+                linear-gradient(135deg, rgba(255,107,107,0.35), rgba(78,205,196,0.25)),
+                url('bridge.png') center/cover no-repeat;
             color: white;
             border-radius: 0 0 2rem 2rem;
             margin-bottom: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.08); /* much lighter overlay */
+            border-radius: 0 0 2rem 2rem;
+            z-index: 1;
+        }
+        header .container {
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.18); /* subtle text shadow for readability */
         }
 
         h1 {
@@ -58,7 +94,7 @@
             background: white;
             padding: 2rem;
             border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 24px rgba(78, 205, 196, 0.10), 0 1.5px 4px rgba(44, 62, 80, 0.08);
             margin-bottom: 2rem;
         }
 
@@ -89,20 +125,54 @@
             border: 2px solid #E0E0E0;
             border-radius: 0.5rem;
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.07);
         }
-
         .search-input:focus {
             outline: none;
             border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15), 0 2px 8px rgba(255, 107, 107, 0.07);
         }
 
         .results-container {
             background: white;
             padding: 2rem;
             border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 24px rgba(44, 62, 80, 0.10), 0 1.5px 4px rgba(44, 62, 80, 0.08);
             min-height: 200px;
+        }
+
+        .results-guide {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            color: #888;
+            font-family: 'Poppins', sans-serif;
+            animation: fadeIn 1s;
+        }
+        .results-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        .results-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--primary-color);
+            letter-spacing: 0.01em;
+        }
+        .results-desc {
+            font-size: 1rem;
+            text-align: center;
+            color: #666;
+        }
+        .results-example {
+            color: var(--secondary-color);
+            font-weight: 500;
+            font-style: italic;
         }
 
         .suburb-card {
@@ -111,47 +181,42 @@
             border-radius: 0.5rem;
             margin-bottom: 1rem;
             border-left: 4px solid var(--primary-color);
-            transition: transform 0.3s ease;
+            box-shadow: 0 2px 12px rgba(78, 205, 196, 0.08);
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-
         .suburb-card:hover {
-            transform: translateX(5px);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.13);
         }
-
         .suburb-name {
             font-size: 1.2rem;
             font-weight: 600;
             color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
-
         .suburb-details {
             color: var(--text-color);
-            opacity: 0.8;
+            opacity: 0.85;
         }
-
+        .region-pill {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+            color: #222;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 999px;
+            padding: 0.25em 0.9em;
+            margin-bottom: 0.5em;
+            margin-right: 0.5em;
+            box-shadow: 0 1px 4px rgba(78, 205, 196, 0.10);
+            letter-spacing: 0.02em;
+        }
         .error-message {
             color: var(--primary-color);
             text-align: center;
             padding: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            header {
-                padding: 2rem 0;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .search-tabs {
-                flex-direction: column;
-            }
         }
 
         footer {
@@ -175,10 +240,40 @@
             margin-left: 1rem;
             font-weight: 500;
             transition: color 0.2s;
+            font-size: 1.2rem;
         }
         .footer-links a:hover {
             color: #fff;
             text-decoration: underline;
+        }
+        .footer-social {
+            margin-top: 0.5rem;
+        }
+        .footer-social a {
+            display: inline-block;
+            margin: 0 0.4rem;
+            color: #fff;
+            font-size: 1.4rem;
+            opacity: 0.8;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .footer-social a:hover {
+            opacity: 1;
+            transform: scale(1.15);
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            header {
+                padding: 2rem 0;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .search-tabs {
+                flex-direction: column;
+            }
         }
         @media (max-width: 600px) {
             .footer-container {
@@ -196,6 +291,7 @@
     <header>
         <div class="container">
             <h1>NSW Suburbs Explorer</h1>
+            <div class="accent-bar"></div>
             <p class="subtitle">Discover the vibrant suburbs of New South Wales</p>
         </div>
     </header>
@@ -210,7 +306,14 @@
         </div>
 
         <div class="results-container" id="results">
-            <!-- Results will be populated here -->
+            <div class="results-guide">
+                <span class="results-icon">🔍</span>
+                <div class="results-title">Start Exploring NSW Suburbs!</div>
+                <div class="results-desc">
+                    Type a region or suburb name above to discover details, postcodes, and more.<br>
+                    Try searching for <span class="results-example">Sydney Region</span> or <span class="results-example">Parramatta</span>.
+                </div>
+            </div>
         </div>
     </main>
 
@@ -218,11 +321,17 @@
         <div class="footer-container">
             <span>&copy; <span id="year"></span> NSW Suburbs Explorer &mdash; Built by Kailash KC</span>
             <span class="footer-links">
-                <a href="https://github.com/kailashkc33" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://linkedin.com/in/kailashkc" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i>LinkedIn</a>
+                <a href="https://github.com/kailashkc33" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i> GitHub</a>
+                <a href="mailto:kc.kailash33@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i>Email</a>
+                
             </span>
+            
         </div>
     </footer>
 
+    <!-- Font Awesome for social icons -->
+    <script src="https://kit.fontawesome.com/2b8e2e1e7b.js" crossorigin="anonymous"></script>
     <script>
         const API_URL = 'http://localhost:3000/api';
         let currentTab = 'region';
@@ -345,9 +454,9 @@
 
             resultsContainer.innerHTML = suburbs.map(suburb => `
                 <div class="suburb-card">
+                    <span class="region-pill">${suburb.region}</span>
                     <div class="suburb-name">${suburb.suburb}</div>
                     <div class="suburb-details">
-                        <p>Region: ${suburb.region}</p>
                         <p>Postcode: ${suburb.postcode}</p>
                     </div>
                 </div>
