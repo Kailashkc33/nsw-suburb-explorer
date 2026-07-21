@@ -5,11 +5,11 @@ Built with Node.js, Express, Supabase, and a beautiful responsive frontend.
 
 
 Features
-🔎 Search suburbs by region or suburb name
-📍 View suburb details including region and postcode
-🌏 Explore all regions in NSW
-⚡ Fast, modern, and mobile-friendly UI
-🔒 Secure backend with Supabase integration
+- Search suburbs by region or suburb name
+- View suburb details including region and postcode
+  - Explore all regions in NSW
+- Fast, modern, and mobile-friendly UI
+  - Secure backend with Supabase integration
 
 
 Tech Stack
