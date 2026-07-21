@@ -2,6 +2,13 @@
 node_modules/
 .DS_Store
 .cursor/
+test/
+supabase/
+scripts/
+
+src/check-table.js
+src/test-db.js
+src/test-regions.js
 
 data/backups/
 data/generated/

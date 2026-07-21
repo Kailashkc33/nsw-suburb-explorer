@@ -2,10 +2,36 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { normalizeSuburbName, findProfileForSuburb } = require('../scripts/lib/abs-census');
 
 const GENERATED_PROFILES = path.join(__dirname, '../data/generated/nsw-suburb-profiles-2021.json');
 const GENERATED_REPORT = path.join(__dirname, '../data/generated/nsw-suburb-profile-match-report.json');
+
+function normalizeSuburbName(value) {
+  return String(value || '')
+    .toLocaleLowerCase('en-AU')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s*\([^)]*\)\s*/g, ' ')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9\s'-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findProfileForSuburb(profiles, suburb, matchReport = null) {
+  if (!suburb) return null;
+  if (matchReport?.matched?.length) {
+    const link = matchReport.matched.find((item) => String(item.suburb_id) === String(suburb.id));
+    if (link) return profiles.find((profile) => profile.sal_code === link.sal_code) || null;
+    const ambiguousHit = matchReport.ambiguous?.some((group) => group.suburbs.some((item) => String(item.id) === String(suburb.id)));
+    if (ambiguousHit) return null;
+  }
+
+  const key = normalizeSuburbName(suburb.suburb);
+  const candidates = profiles.filter((profile) => profile.suburb_name_normalized === key);
+  if (candidates.length === 1) return candidates[0];
+  return null;
+}
 
 function shapeProfile(profile) {
   if (!profile) return null;
