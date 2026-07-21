@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/*.test.js",
+    "data:import": "node scripts/import-suburbs.js",
+    "data:sync": "node scripts/sync-nsw-spatial.js",
+    "data:abs-profiles": "node scripts/import-abs-profiles.js",
+    "data:gtfs-transport": "node scripts/import-gtfs-transport.js"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +23,7 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "xlsx": "^0.18.5"
   }
 }

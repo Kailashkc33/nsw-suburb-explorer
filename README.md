@@ -1,27 +1,25 @@
-NSW Suburbs Explorer
-A modern, vibrant web application for exploring suburbs across New South Wales, Australia.
-Users can search for suburbs by region or by name, view postcodes, and discover the diversity of NSW’s localities.
-Built with Node.js, Express, Supabase, and a beautiful responsive frontend.
+# NSW Suburbs Explorer
 
+Search NSW suburbs by name, postcode or region. Suburb details include ABS Census 2021 indicators and nearby Transport for NSW stops when available.
 
-Features
-- Search suburbs by region or suburb name
-- View suburb details including region and postcode
-- Explore all regions in NSW
-- Fast, modern, and mobile-friendly UI
-- Secure backend with Supabase integration
+Stack: Node.js, Express, Supabase, plain HTML/CSS/JS.
 
+## Setup
 
-Tech Stack
-Node.js + Express (Backend API)
-Supabase (Database & Auth)
-HTML/CSS/JS (Frontend, no framework)
-Deployed locally or on your favorite platform
+1. `npm install`
+2. Add `SUPABASE_URL` and `SUPABASE_ANON_KEY` to `.env`
+3. `npm start` → http://localhost:3000
+4. `npm test`
 
+For local data imports only, also set `SUPABASE_SERVICE_ROLE_KEY`. Never commit it or expose it to the browser.
 
-Getting Started
-Clone the repo
-Install dependencies: npm install
-Add your Supabase credentials to a .env file
-Start the server: npm start
-Visit http://localhost:3000 in your browser
+## Data commands
+
+```bash
+npm run data:import -- path/to/nsw-suburbs.csv
+npm run data:sync
+npm run data:abs-profiles
+npm run data:gtfs-transport
+```
+
+Schema for census and transport tables is under `supabase/migrations/`. Raw GTFS and generated match files stay local (see `.gitignore`).

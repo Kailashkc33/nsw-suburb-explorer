@@ -1,477 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en-AU">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parramatta Suburbs Explorer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #FF6B6B;
-            --secondary-color: #4ECDC4;
-            --accent-color: #FFE66D;
-            --text-color: #2C3E50;
-            --background-color: #F7F9FC;
-            --pill-bg: #e0f7fa;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            animation: fadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .accent-bar {
-            height: 5px;
-            width: 80px;
-            margin: 0.5rem auto 1.2rem auto;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color), var(--primary-color));
-            background-size: 300% 100%;
-            animation: gradientMove 4s linear infinite;
-            border-radius: 999px;
-        }
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        header {
-            text-align: center;
-            padding: 3rem 0;
-            background: 
-                linear-gradient(135deg, rgba(255,107,107,0.12), rgba(78,205,196,0.10)),
-                url('bridge.png') center/cover no-repeat;
-            color: white;
-            border-radius: 0 0 2rem 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-        header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.03); /* almost transparent */
-            border-radius: 0 0 2rem 2rem;
-            z-index: 1;
-        }
-        header .container {
-            position: relative;
-            z-index: 2;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.18); /* subtle text shadow for readability */
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        .search-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 8px 24px rgba(78, 205, 196, 0.10), 0 1.5px 4px rgba(44, 62, 80, 0.08);
-            margin-bottom: 2rem;
-        }
-
-        .search-tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .tab {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            background: var(--background-color);
-            color: var(--text-color);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tab.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid #E0E0E0;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            transition: border-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.07);
-        }
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15), 0 2px 8px rgba(255, 107, 107, 0.07);
-        }
-
-        .results-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 8px 24px rgba(44, 62, 80, 0.10), 0 1.5px 4px rgba(44, 62, 80, 0.08);
-            min-height: 200px;
-        }
-
-        .results-guide {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 120px;
-            color: #888;
-            font-family: 'Poppins', sans-serif;
-            animation: fadeIn 1s;
-        }
-        .results-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
-        .results-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-            color: var(--primary-color);
-            letter-spacing: 0.01em;
-        }
-        .results-desc {
-            font-size: 1rem;
-            text-align: center;
-            color: #666;
-        }
-        .results-example {
-            color: var(--secondary-color);
-            font-weight: 500;
-            font-style: italic;
-        }
-
-        .suburb-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid var(--primary-color);
-            box-shadow: 0 2px 12px rgba(78, 205, 196, 0.08);
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        .suburb-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.13);
-        }
-        .suburb-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-        .suburb-details {
-            color: var(--text-color);
-            opacity: 0.85;
-        }
-        .region-pill {
-            display: inline-block;
-            background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
-            color: #222;
-            font-size: 0.85rem;
-            font-weight: 500;
-            border-radius: 999px;
-            padding: 0.25em 0.9em;
-            margin-bottom: 0.5em;
-            margin-right: 0.5em;
-            box-shadow: 0 1px 4px rgba(78, 205, 196, 0.10);
-            letter-spacing: 0.02em;
-        }
-        .error-message {
-            color: var(--primary-color);
-            text-align: center;
-            padding: 1rem;
-        }
-
-        footer {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            color: white;
-            padding: 1.5rem 0;
-            text-align: center;
-            margin-top: 3rem;
-        }
-        .footer-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .footer-links a {
-            color: var(--accent-color);
-            text-decoration: none;
-            margin-left: 1rem;
-            font-weight: 500;
-            transition: color 0.2s;
-            font-size: 1.2rem;
-        }
-        .footer-links a:hover {
-            color: #fff;
-            text-decoration: underline;
-        }
-        .footer-social {
-            margin-top: 0.5rem;
-        }
-        .footer-social a {
-            display: inline-block;
-            margin: 0 0.4rem;
-            color: #fff;
-            font-size: 1.4rem;
-            opacity: 0.8;
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        .footer-social a:hover {
-            opacity: 1;
-            transform: scale(1.15);
-        }
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            header {
-                padding: 2rem 0;
-            }
-            h1 {
-                font-size: 2rem;
-            }
-            .search-tabs {
-                flex-direction: column;
-            }
-        }
-        @media (max-width: 600px) {
-            .footer-container {
-                font-size: 0.95rem;
-                flex-direction: column;
-                gap: 0.3rem;
-            }
-            .footer-links a {
-                margin-left: 0.5rem;
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Search and browse suburbs, regions and postcodes across New South Wales.">
+  <title>NSW Suburbs Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>NSW Suburbs Explorer</h1>
-            <div class="accent-bar"></div>
-            <p class="subtitle">Discover the vibrant suburbs of New South Wales</p>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="hero">
+    <div class="hero-wash" aria-hidden="true"></div>
+    <nav class="nav shell" aria-label="Primary navigation">
+      <a class="brand" href="/" aria-label="NSW Suburbs Explorer home">
+        <span class="brand-mark" aria-hidden="true">NSW</span>
+        Suburbs
+      </a>
+      <a class="nav-link" href="#regions">Browse regions</a>
+    </nav>
+
+    <div class="hero-content shell">
+      <p class="brand-hero">NSW Suburbs</p>
+      <h1>Find any place across the state.</h1>
+      <p class="hero-copy">Live search across suburbs, postcodes and regions, then hop to neighbours in one tap.</p>
+
+      <div class="search-wrap">
+        <form class="search" id="searchForm" role="search" autocomplete="off">
+          <label class="sr-only" for="searchInput">Search suburbs, postcodes or regions</label>
+          <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/>
+          </svg>
+          <input
+            id="searchInput"
+            type="search"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Try Parramatta, 2150 or Central Coast"
+            aria-controls="suggestPanel"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            role="combobox"
+          >
+          <button type="submit">Search</button>
+        </form>
+
+        <div
+          id="suggestPanel"
+          class="suggest-panel"
+          role="listbox"
+          aria-label="Search suggestions"
+          hidden
+        ></div>
+      </div>
+
+      <div class="hero-meta">
+        <p class="search-hint">Type to see live matches · Use ↑ ↓ Enter to navigate</p>
+        <div id="liveStats" class="live-stats" aria-live="polite"></div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="recentSection" class="section shell recent-section" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Continue</p>
+          <h2>Recently viewed</h2>
         </div>
-    </header>
+        <button class="text-button" id="clearRecent" type="button">Clear</button>
+      </div>
+      <div id="recentList" class="recent-rail" role="list"></div>
+    </section>
 
-    <main class="container">
-        <div class="search-container">
-            <div class="search-tabs">
-                <button class="tab active" data-tab="region">Search by Region</button>
-                <button class="tab" data-tab="suburb">Search by Suburb</button>
-            </div>
-            <input type="text" class="search-input" placeholder="Enter region or suburb name..." id="searchInput">
+    <section id="resultsSection" class="section shell" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Results</p>
+          <h2 id="resultsTitle">Matches</h2>
         </div>
-
-        <div class="results-container" id="results">
-            <div class="results-guide">
-                <span class="results-icon">🔍</span>
-                <div class="results-title">Start Exploring NSW Suburbs!</div>
-                <div class="results-desc">
-                    Type a region or suburb name above to discover details, postcodes, and more.<br>
-                    Try searching for <span class="results-example">Sydney Region</span> or <span class="results-example">Parramatta</span>.
-                </div>
-            </div>
+        <div class="results-tools">
+          <div class="view-toggle" role="group" aria-label="Result layout">
+            <button type="button" id="viewGrid" class="is-active" aria-pressed="true" title="Grid view">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"/></svg>
+            </button>
+            <button type="button" id="viewList" aria-pressed="false" title="List view">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z"/></svg>
+            </button>
+          </div>
+          <button class="text-button" id="clearSearch" type="button">Clear</button>
         </div>
-    </main>
+      </div>
+      <div id="searchStatus" class="status" role="status" aria-live="polite"></div>
+      <div id="searchResults" class="card-grid" data-view="grid"></div>
+    </section>
 
-    <footer>
-        <div class="footer-container">
-            <span>&copy; <span id="year"></span> NSW Suburbs Explorer &mdash; Built by Kailash KC</span>
-            <span class="footer-links">
-                <a href="https://linkedin.com/in/kailashkc" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i>LinkedIn</a>
-                <a href="https://github.com/kailashkc33" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i> GitHub</a>
-                <a href="mailto:kc.kailash33@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i>Email</a>
-                
-            </span>
-            
+    <section id="regions" class="section shell regions-section" aria-labelledby="regionsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Explore the map of places</p>
+          <h2 id="regionsTitle">Regions across NSW</h2>
         </div>
-    </footer>
+        <span id="regionCount" class="muted"></span>
+      </div>
 
-    <!-- Font Awesome for social icons -->
-    <script src="https://kit.fontawesome.com/2b8e2e1e7b.js" crossorigin="anonymous"></script>
-    <script>
-        const API_URL = 'https://nsw-suburb-explorer.onrender.com/api';
-        let currentTab = 'region';
+      <div class="region-toolbar">
+        <label class="region-filter">
+          <span class="sr-only">Filter regions</span>
+          <input id="regionFilter" type="search" placeholder="Filter regions…" autocomplete="off">
+        </label>
+        <div class="sort-group" role="group" aria-label="Sort regions">
+          <button type="button" class="chip is-active" data-sort="name">A-Z</button>
+          <button type="button" class="chip" data-sort="count">Most suburbs</button>
+        </div>
+      </div>
 
-        // Test API connection on page load
-        window.addEventListener('load', async () => {
-            try {
-                console.log('Testing API connection...');
-                const response = await fetch(`${API_URL}/health`);
-                const data = await response.json();
-                console.log('API health check:', data);
-            } catch (error) {
-                console.error('API health check failed:', error);
-                document.getElementById('results').innerHTML = `
-                    <p class="error-message">Unable to connect to the server. Please check if the server is running.</p>
-                `;
-            }
-        });
+      <div id="regionStatus" class="status" role="status" aria-live="polite">Loading regions…</div>
+      <div id="regionGrid" class="region-grid"></div>
+    </section>
+  </main>
 
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentTab = tab.dataset.tab;
-                document.getElementById('searchInput').value = '';
-                document.getElementById('results').innerHTML = '';
-            });
-        });
+  <dialog id="detailDialog" aria-labelledby="detailTitle">
+    <button class="dialog-close" id="closeDialog" aria-label="Close suburb details">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <div id="detailContent"></div>
+  </dialog>
 
-        // Search functionality
-        let searchTimeout;
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            const query = e.target.value.trim();
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-            if (query.length < 2) {
-                document.getElementById('results').innerHTML = '';
-                return;
-            }
+  <footer>
+    <div class="shell footer-inner">
+      <div>
+        <strong>NSW Suburbs Explorer</strong>
+        <p>Built to make exploring NSW simpler.</p>
+      </div>
+      <p>Data should be verified before official use. <span id="year"></span></p>
+    </div>
+  </footer>
 
-            searchTimeout = setTimeout(() => {
-                if (currentTab === 'region') {
-                    searchByRegion(query);
-                } else {
-                    searchBySuburb(query);
-                }
-            }, 300);
-        });
-
-        async function searchByRegion(region) {
-            try {
-                console.log('Searching by region:', region);
-                const url = `${API_URL}/suburbs/region/${encodeURIComponent(region)}`;
-                console.log('Request URL:', url);
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('Response status:', response.status);
-                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-                
-                const data = await response.json();
-                console.log('Response data:', data);
-
-                if (response.ok) {
-                    displayResults(data.suburbs);
-                } else {
-                    displayError(data.error || 'Error searching for suburbs');
-                }
-            } catch (error) {
-                console.error('Error in searchByRegion:', error);
-                displayError('Error searching for suburbs. Please try again.');
-            }
-        }
-
-        async function searchBySuburb(query) {
-            try {
-                console.log('Searching by suburb:', query);
-                const url = `${API_URL}/suburbs/search?query=${encodeURIComponent(query)}`;
-                console.log('Request URL:', url);
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('Response status:', response.status);
-                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-                
-                const data = await response.json();
-                console.log('Response data:', data);
-
-                if (response.ok) {
-                    displayResults(data.results);
-                } else {
-                    displayError(data.error || 'Error searching for suburbs');
-                }
-            } catch (error) {
-                console.error('Error in searchBySuburb:', error);
-                displayError('Error searching for suburbs. Please try again.');
-            }
-        }
-
-        function displayResults(suburbs) {
-            console.log('Displaying results:', suburbs);
-            const resultsContainer = document.getElementById('results');
-            if (suburbs.length === 0) {
-                resultsContainer.innerHTML = '<p class="error-message">No suburbs found</p>';
-                return;
-            }
-
-            resultsContainer.innerHTML = suburbs.map(suburb => `
-                <div class="suburb-card">
-                    <span class="region-pill">${suburb.region}</span>
-                    <div class="suburb-name">${suburb.suburb}</div>
-                    <div class="suburb-details">
-                        <p>Postcode: ${suburb.postcode}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function displayError(message) {
-            console.error('Displaying error:', message);
-            document.getElementById('results').innerHTML = `
-                <p class="error-message">${message}</p>
-            `;
-        }
-
-        // Set current year in footer
-        document.getElementById('year').textContent = new Date().getFullYear();
-    </script>
+  <script src="/app.js" defer></script>
 </body>
-</html> 
+</html>

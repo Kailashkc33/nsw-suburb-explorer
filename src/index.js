@@ -2,209 +2,177 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const fallbackSuburbs = require('../data/suburbs.sample.json');
+const { createProfileLookup } = require('./census-profiles');
+const { createTransportLookup } = require('./transport-lookup');
 require('dotenv').config();
 
-// Check for required environment variables
-const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+const publicPath = path.join(__dirname, '../public');
+const clean = value => String(value || '').trim().replace(/[,%()']/g, '').slice(0, 80);
+const normalise = value => String(value || '').toLocaleLowerCase('en-AU');
 
-if (missingEnvVars.length > 0) {
-    console.error('Missing required environment variables:', missingEnvVars.join(', '));
-    console.error('Please create a .env file with the required variables.');
-    process.exit(1);
+function rankSuburb(item, query) {
+  const q = normalise(query);
+  const name = normalise(item.suburb);
+  const postcode = String(item.postcode);
+  if (name === q || postcode === q) return 0;
+  if (name.startsWith(q) || postcode.startsWith(q)) return 1;
+  if (normalise(item.region).startsWith(q)) return 2;
+  return 3;
 }
 
-const app = express();
-const port = process.env.PORT || 3000;
+function createDataSource(supabase, profileLookup = createProfileLookup(), transportLookup = createTransportLookup()) {
+  async function fromDatabase(builder) {
+    if (!supabase) return null;
+    const { data, error, count } = await builder(supabase);
+    if (error) throw error;
+    return { data, count };
+  }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+  async function allDatabaseRows(builder) {
+    if (!supabase) return null;
+    const rows = [];
+    for (let start = 0; ; start += 1000) {
+      const { data, error } = await builder(supabase).range(start, start + 999);
+      if (error) throw error;
+      rows.push(...data);
+      if (data.length < 1000) return rows;
+    }
+  }
 
-// Request logging middleware
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  return {
+    async all(page = 1, limit = 24) {
+      const start = (page - 1) * limit;
+      const result = await fromDatabase(db => db.from('suburbs')
+        .select('id, region, suburb, postcode', { count: 'exact' })
+        .order('suburb').range(start, start + limit - 1));
+      if (result?.data?.length) return { ...result, source: 'database' };
+      return { data: fallbackSuburbs.slice(start, start + limit), count: fallbackSuburbs.length, source: 'sample' };
+    },
+    async search(query, limit = 12) {
+      const safeQuery = clean(query);
+      const result = await fromDatabase(db => db.from('suburbs')
+        .select('id, region, suburb, postcode')
+        .or(`suburb.ilike.%${safeQuery}%,postcode.ilike.%${safeQuery}%,region.ilike.%${safeQuery}%`)
+        .limit(limit));
+      const source = result?.data?.length ? result.data : fallbackSuburbs.filter(item =>
+        [item.suburb, item.postcode, item.region].some(value => normalise(value).includes(normalise(safeQuery)))
+      );
+      return source.sort((a, b) => rankSuburb(a, safeQuery) - rankSuburb(b, safeQuery) || a.suburb.localeCompare(b.suburb)).slice(0, limit);
+    },
+    async regions() {
+      const databaseRows = await allDatabaseRows(db => db.from('suburbs').select('region').order('id'));
+      const rows = databaseRows?.length ? databaseRows : fallbackSuburbs;
+      const counts = rows.reduce((map, row) => map.set(row.region, (map.get(row.region) || 0) + 1), new Map());
+      return [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name));
+    },
+    async byRegion(region) {
+      const safeRegion = clean(region);
+      const databaseRows = await allDatabaseRows(db => db.from('suburbs')
+        .select('id, region, suburb, postcode').ilike('region', safeRegion).order('suburb'));
+      return databaseRows?.length ? databaseRows : fallbackSuburbs.filter(item => normalise(item.region) === normalise(safeRegion));
+    },
+    async byId(id) {
+      if (supabase && /^\d+$/.test(String(id))) {
+        const result = await fromDatabase(db => db.from('suburbs').select('id, region, suburb, postcode').eq('id', id).maybeSingle());
+        if (result?.data) return result.data;
+      }
+      return fallbackSuburbs.find(item => String(item.id) === String(id)) || null;
+    },
+    async profileFor(suburb) {
+      return profileLookup.forSuburb(suburb, supabase);
+    },
+    async transportFor(suburb) {
+      return transportLookup.forSuburb(suburb, supabase);
+    }
+  };
+}
+
+function createApp(options = {}) {
+  const app = express();
+  const suppliedClient = Object.prototype.hasOwnProperty.call(options, 'supabase') ? options.supabase : undefined;
+  const supabase = suppliedClient !== undefined ? suppliedClient : (
+    process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)
+      ? createClient(process.env.SUPABASE_URL, (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY).trim())
+      : null
+  );
+  const profileLookup = options.profileLookup || createProfileLookup(options);
+  const transportLookup = options.transportLookup || createTransportLookup(options);
+  const dataSource = options.dataSource || createDataSource(supabase, profileLookup, transportLookup);
+
+  app.disable('x-powered-by');
+  app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
+  app.use(express.json({ limit: '20kb' }));
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     next();
-});
+  });
 
-// Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-console.log('Initializing Supabase client with URL:', supabaseUrl);
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// API Routes
-const apiRouter = express.Router();
-
-// Health check route
-apiRouter.get('/health', (req, res) => {
-    console.log('Health check requested');
-    res.json({ status: 'ok' });
-});
-
-// Get all suburbs (with pagination)
-apiRouter.get('/suburbs', async (req, res) => {
-    console.log('Fetching all suburbs');
+  const api = express.Router();
+  api.get('/health', async (_req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const start = (page - 1) * limit;
-        
-        console.log('Querying Supabase with params:', { page, limit, start });
-        const { data, error, count } = await supabase
-            .from('suburbs')
-            .select('id, region, suburb, postcode, created_at', { count: 'exact' })
-            .range(start, start + limit - 1)
-            .order('suburb');
-        
-        if (error) {
-            console.error('Supabase error:', error);
-            throw error;
-        }
-        
-        console.log(`Found ${data.length} suburbs`);
-        res.json({
-            data,
-            pagination: {
-                total: count,
-                page,
-                limit,
-                totalPages: Math.ceil(count / limit)
-            }
-        });
+      const regions = await dataSource.regions();
+      res.json({ status: 'ok', dataAvailable: regions.length > 0 });
     } catch (error) {
-        console.error('Error fetching suburbs:', error);
-        res.status(500).json({ error: error.message });
+      res.status(503).json({ status: 'degraded', error: 'Data service unavailable' });
     }
-});
-
-// Get suburbs by region
-apiRouter.get('/suburbs/region/:region', async (req, res) => {
-    console.log('Fetching suburbs by region:', req.params.region);
+  });
+  api.get('/suburbs', async (req, res, next) => {
     try {
-        const { data, error } = await supabase
-            .from('suburbs')
-            .select('id, region, suburb, postcode, created_at')
-            .ilike('region', `%${req.params.region}%`)
-            .order('suburb');
-        
-        if (error) {
-            console.error('Supabase error:', error);
-            throw error;
-        }
-        
-        if (data.length === 0) {
-            console.log('No suburbs found for region:', req.params.region);
-            return res.status(404).json({ 
-                error: 'No suburbs found in this region',
-                region: req.params.region
-            });
-        }
-        
-        console.log(`Found ${data.length} suburbs for region ${req.params.region}`);
-        res.json({
-            region: req.params.region,
-            suburbs: data
-        });
-    } catch (error) {
-        console.error('Error fetching suburbs by region:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Search suburb by name
-apiRouter.get('/suburbs/search', async (req, res) => {
-    console.log('Searching suburbs with query:', req.query.query);
+      const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 24));
+      const result = await dataSource.all(page, limit);
+      res.json({ data: result.data, source: result.source, pagination: { total: result.count, page, limit, totalPages: Math.ceil(result.count / limit) } });
+    } catch (error) { next(error); }
+  });
+  api.get('/suburbs/search', async (req, res, next) => {
     try {
-        const { query } = req.query;
-        
-        if (!query) {
-            console.log('No query provided');
-            return res.status(400).json({ error: 'Search query is required' });
-        }
-        
-        const { data, error } = await supabase
-            .from('suburbs')
-            .select('id, region, suburb, postcode, created_at')
-            .or(`suburb.ilike.%${query}%,postcode.ilike.%${query}%`)
-            .order('suburb');
-        
-        if (error) {
-            console.error('Supabase error:', error);
-            throw error;
-        }
-        
-        if (data.length === 0) {
-            console.log('No suburbs found for query:', query);
-            return res.status(404).json({ 
-                error: 'No suburbs found matching your search',
-                query
-            });
-        }
-        
-        console.log(`Found ${data.length} suburbs for query ${query}`);
-        res.json({
-            query,
-            results: data
-        });
-    } catch (error) {
-        console.error('Error searching suburbs:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get all unique regions
-apiRouter.get('/regions', async (req, res) => {
-    console.log('Fetching all regions');
+      const query = clean(req.query.query);
+      if (query.length < 2) return res.status(400).json({ error: 'Enter at least two characters' });
+      const results = await dataSource.search(query, Math.min(20, Number(req.query.limit) || 12));
+      res.json({ query, results });
+    } catch (error) { next(error); }
+  });
+  api.get('/suburbs/region/:region', async (req, res, next) => {
     try {
-        const { data, error } = await supabase
-            .from('suburbs')
-            .select('region')
-            .order('region');
-        
-        if (error) {
-            console.error('Supabase error:', error);
-            throw error;
-        }
-        
-        // Get unique regions and sort them
-        const uniqueRegions = [...new Set(data.map(item => item.region))].sort();
-        console.log(`Found ${uniqueRegions.length} unique regions:`, uniqueRegions);
-        
-        res.json({
-            regions: uniqueRegions
-        });
-    } catch (error) {
-        console.error('Error fetching regions:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
+      const suburbs = await dataSource.byRegion(req.params.region);
+      res.json({ region: clean(req.params.region), suburbs });
+    } catch (error) { next(error); }
+  });
+  api.get('/suburbs/:id', async (req, res, next) => {
+    try {
+      const suburb = await dataSource.byId(req.params.id);
+      if (!suburb) return res.status(404).json({ error: 'Suburb not found' });
+      const nearby = (await dataSource.byRegion(suburb.region)).filter(item => String(item.id) !== String(suburb.id)).slice(0, 5);
+      const census_profile = await dataSource.profileFor(suburb);
+      const transport = await dataSource.transportFor(suburb);
+      res.json({
+        suburb,
+        nearby,
+        census_profile,
+        transport_summary: transport.transport_summary,
+        nearby_transport: transport.nearby_transport,
+      });
+    } catch (error) { next(error); }
+  });
+  api.get('/regions', async (_req, res, next) => {
+    try { res.json({ regions: await dataSource.regions() }); } catch (error) { next(error); }
+  });
 
-// Mount API routes
-app.use('/api', apiRouter);
+  app.use('/api', api);
+  app.use(express.static(publicPath));
+  app.get(/.*/, (_req, res) => res.sendFile(path.join(publicPath, 'index.html')));
+  app.use((error, _req, res, _next) => {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  });
+  return app;
+}
 
-// Serve static files
-const publicPath = path.join(__dirname, '../public');
-console.log('Serving static files from:', publicPath);
-app.use(express.static(publicPath));
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  createApp().listen(port, () => console.log(`NSW Suburbs Explorer running at http://localhost:${port}`));
+}
 
-// Root route to serve index.html
-app.get('/', (req, res) => {
-    console.log('Root route accessed');
-    res.sendFile(path.join(publicPath, 'index.html'));
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ error: err.message });
-});
-
-// Start server
-app.listen(port, () => {
-    console.log('=================================');
-    console.log(`Server is running on port ${port}`);
-    console.log(`Supabase URL: ${supabaseUrl}`);
-    console.log(`Public path: ${publicPath}`);
-    console.log('=================================');
-}); 
+module.exports = { createApp, createDataSource, clean, rankSuburb };
